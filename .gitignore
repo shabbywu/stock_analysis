@@ -1,0 +1,7 @@
+build/
+stock_analysis.egg-info/
+.idea/
+*.pyc
+runtime/
+.DS_Store
+stock_analysis/settings.py
