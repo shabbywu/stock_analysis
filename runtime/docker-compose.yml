@@ -2,20 +2,30 @@ version: '3.2'
 services:
   influxdb:
     image: influxdb
+    restart: always
     ports:
       - "8086:8086"
     volumes:
       - ./influxdb/:/var/lib/influxdb
     environment:
-      - INFLUXDB_ADMIN_USER=root
-      - INFLUXDB_ADMIN_PASSWORD=root
-      - INFLUXDB_USER=shabbywu
-      - INFLUXDB_USER_PASSWORD=im@shabbywu
+      - INFLUXDB_ADMIN_USER=example
+      - INFLUXDB_ADMIN_PASSWORD=example
+      - INFLUXDB_USER=example
+      - INFLUXDB_USER_PASSWORD=example
   chronograf:
     image:  chronograf
+    restart: always
     ports:
       - "8888:8888"
     volumes:
       - ./chronograf:/var/lib/chronograf
     environment:
       influxdb-url: http://influxdb:8086
+  mysqldb:
+    image:  mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    volumes:
+      - ./mysqldb/:/var/lib/mysql/
