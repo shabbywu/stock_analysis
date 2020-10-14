@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Iterator
 import backtrader as bt
+
 import datetime as dt
 from influxdb import InfluxDBClient as idbclient
 from influxdb.exceptions import InfluxDBClientError
@@ -95,7 +96,7 @@ class InfluxDB(bt.feeds.DataBase):
         except StopIteration:
             return False
 
-        self.l.datetime[0] = self.date2num(
+        self.l.datetime[0] = bt.utils.date2num(
             dt.datetime.strptime(bar["time"], "%Y-%m-%dT%H:%M:%SZ")
         )
 

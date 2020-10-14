@@ -6,6 +6,7 @@ from typing import Tuple
 
 from stock_analysis import settings
 from stock_analysis.backtest.feeds import InfluxDB
+from stock_analysis.backtest.plot.plotter import EchartPlotter
 
 
 class AOStrategy(bt.SignalStrategy):
@@ -118,17 +119,18 @@ class AOStrategy(bt.SignalStrategy):
         return False, None
 
 
-cerebro = bt.Cerebro()
-cerebro.addstrategy(AOStrategy)
-data = InfluxDB(
-    **settings.INFLUXDB_CONF,
-    dataname="stock_history",
-    stock_code="SZ.300274",
-    startdate="2020-01-01 00:00:00",
-)
-cerebro.replaydata(data, timeframe=bt.TimeFrame.Days, compression=True)
-# cerebro.adddata(data)
-cerebro.broker.setcash(100000.0)
-cerebro.addsizer(bt.sizers.PercentSizerInt, percents=20)
-cerebro.run()
-cerebro.plot()
+if __name__ == "__main__":
+    cerebro = bt.Cerebro()
+    cerebro.addstrategy(AOStrategy)
+    data = InfluxDB(
+        **settings.INFLUXDB_CONF,
+        dataname="stock_history",
+        stock_code="SZ.300274",
+        startdate="2020-01-01 00:00:00",
+    )
+    cerebro.replaydata(data, timeframe=bt.TimeFrame.Days, compression=True)
+    # cerebro.adddata(data)
+    cerebro.broker.setcash(100000.0)
+    cerebro.addsizer(bt.sizers.PercentSizerInt, percents=20)
+    cerebro.run()
+    cerebro.plot(EchartPlotter())

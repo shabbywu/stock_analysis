@@ -1,0 +1,21 @@
+version: '3.2'
+services:
+  influxdb:
+    image: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb/:/var/lib/influxdb
+    environment:
+      - INFLUXDB_ADMIN_USER=root
+      - INFLUXDB_ADMIN_PASSWORD=root
+      - INFLUXDB_USER=shabbywu
+      - INFLUXDB_USER_PASSWORD=im@shabbywu
+  chronograf:
+    image:  chronograf
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./chronograf:/var/lib/chronograf
+    environment:
+      influxdb-url: http://influxdb:8086
