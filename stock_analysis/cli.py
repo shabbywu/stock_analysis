@@ -50,7 +50,7 @@ def fetch_stock_base_info_by_tencentapi():
 @click.option("-e", "--end", type=str, default=None)
 def fetch_stock_history_info_by_joinquant(code, interval, start, end):
     for start_dt, end_dt in arrow.Arrow.span_range(
-        "years", arrow.get(start), arrow.get(end)
+        "years", arrow.get(start), arrow.get(end) if end else arrow.now().ceil("day")
     ):
         dr = DateTimeRange(
             start_dt=start_dt.datetime, end_dt=end_dt.datetime, interval=interval

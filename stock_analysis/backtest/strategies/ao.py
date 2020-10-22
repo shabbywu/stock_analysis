@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
-import backtrader as bt
 from typing import Tuple
 
+import backtrader as bt
 from stock_analysis import settings
 from stock_analysis.backtest.feeds import InfluxDB
-from stock_analysis.backtest.plot.plotter import EchartPlotter
 
 
 class AOStrategy(bt.SignalStrategy):
@@ -133,4 +132,3 @@ if __name__ == "__main__":
     cerebro.broker.setcash(100000.0)
     cerebro.addsizer(bt.sizers.PercentSizerInt, percents=20)
     cerebro.run()
-    cerebro.plot(EchartPlotter())

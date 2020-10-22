@@ -19,6 +19,45 @@ TIMEFRAMES = dict(
 )
 
 
+class Data(bt.feeds.DataBase):
+    params = (("_iter", iter([])),)
+
+    def _load(self, datamaster=None, ticks=True):
+        try:
+            data = next(self.params._iter)
+        except StopIteration:
+            return False
+
+        self.l.datetime[0] = data
+        self.l.open[0] = data
+        self.l.high[0] = data
+        self.l.low[0] = data
+        self.l.close[0] = data
+        self.l.volume[0] = data
+
+        return True
+
+
+class OHLC(bt.feeds.DataBase):
+    params = (("_iter", iter([])),)
+
+    def _load(self, datamaster=None, ticks=True):
+        try:
+            data = next(self.params._iter)
+        except StopIteration:
+            return False
+
+        self.l.open[0] = data.open
+        self.l.high[0] = data.high
+        self.l.low[0] = data.low
+        self.l.close[0] = data.close
+
+        self.l.datetime[0] = data.open
+        self.l.volume[0] = data.open
+
+        return True
+
+
 class InfluxDB(bt.feeds.DataBase):
     ndb: idbclient
     biter: Iterator
