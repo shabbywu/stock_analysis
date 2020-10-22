@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 from typing import Dict, List
 
 import jqdatasdk
@@ -35,6 +36,7 @@ class JQClient(BaseHistoryClient):
                 **item[1]
             )
             for item in prices.iterrows()
+            if not math.isnan(item[1][0])
         ]
 
     normalized_code_maps: Dict[str, str] = {}
