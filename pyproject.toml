@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "股票分析"
 authors = ["shabbywu <shabbywu@tencent.com>"]
 
+[[tool.poetry.source]]
+name = "tencent"
+url = "https://mirrors.cloud.tencent.com/pypi/simple/"
+default = true
+
 [tool.poetry.dependencies]
 python = "^3.8.1"
 futu-api = "^3.17.0"
