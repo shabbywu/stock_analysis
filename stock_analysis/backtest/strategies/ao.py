@@ -6,6 +6,7 @@ from typing import Tuple
 import backtrader as bt
 from stock_analysis import settings
 from stock_analysis.backtest.feeds import InfluxDB
+from stock_analysis.utils.timeit import catch_time
 
 
 class AOStrategy(bt.SignalStrategy):
@@ -118,17 +119,29 @@ class AOStrategy(bt.SignalStrategy):
         return False, None
 
 
+def main():
+    with catch_time() as ctx:
+        cerebro = bt.Cerebro(runonce=False)
+        cerebro.addstrategy(AOStrategy)
+        data = InfluxDB(
+            **settings.INFLUXDB_CONF,
+            dataname="stock_history",
+            stock_code="SZ.300274",
+            from_date="2020-01-01",
+            to_date="2020-10-01",
+        )
+        cerebro.replaydata(data, timeframe=bt.TimeFrame.Days, compression=True)
+        # cerebro.adddata(data)
+        cerebro.broker.setcash(100000.0)
+        cerebro.broker.set_coc(True)
+        cerebro.broker.set_coo(False)
+        cerebro.addsizer(bt.sizers.PercentSizerInt, percents=20)
+        cerebro.run()
+        print(cerebro.broker.get_value())
+    print("time cost: ", ctx.time_delta)
+
+
 if __name__ == "__main__":
-    cerebro = bt.Cerebro()
-    cerebro.addstrategy(AOStrategy)
-    data = InfluxDB(
-        **settings.INFLUXDB_CONF,
-        dataname="stock_history",
-        stock_code="SZ.300274",
-        startdate="2020-01-01 00:00:00",
-    )
-    cerebro.replaydata(data, timeframe=bt.TimeFrame.Days, compression=True)
-    # cerebro.adddata(data)
-    cerebro.broker.setcash(100000.0)
-    cerebro.addsizer(bt.sizers.PercentSizerInt, percents=20)
-    cerebro.run()
+    with catch_time() as ctx:
+        main()
+    print("time cost: ", ctx.time_delta)

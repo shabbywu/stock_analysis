@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import signal
 from typing import Optional
+from stock_analysis import settings
 
-from futu.quote.open_quote_context import OpenQuoteContext
+from futu.quote.open_quote_context import OpenQuoteContext, SysConfig
 
 _quote_ctx: Optional[OpenQuoteContext] = None
 
@@ -23,7 +24,9 @@ def close_quote_ctx(sig, frame):
 def get_quote_ctx():
     global _quote_ctx
     if _quote_ctx is None:
-        _quote_ctx = OpenQuoteContext(host="127.0.0.1", port=11111)
+        SysConfig.enable_proto_encrypt(True)
+        SysConfig.set_init_rsa_file(settings.FUTU_OPEND_PRI_KEY)  # rsa 私钥文件路径
+        _quote_ctx = OpenQuoteContext(**settings.FUTU_OPEND_SERVER)
         for sig in HANDLED_SIGNALS:
             signal.signal(sig, close_quote_ctx)
     return _quote_ctx

@@ -69,7 +69,8 @@ class InfluxDB(bt.feeds.DataBase):
         ("password", None),
         ("database", None),
         ("timeframe", bt.TimeFrame.Minutes),
-        ("startdate", None),
+        ("from_date", None),
+        ("to_date", None),
         ("high", "high"),
         ("low", "low"),
         ("open", "open"),
@@ -80,6 +81,16 @@ class InfluxDB(bt.feeds.DataBase):
 
     def start(self):
         super(InfluxDB, self).start()
+        from_dt = (
+            dt.datetime.fromisoformat(self.params.from_date)
+            if self.params.from_date
+            else None
+        )
+        to_dt = (
+            dt.datetime.fromisoformat(self.params.to_date)
+            if self.params.to_date
+            else None
+        )
         try:
             self.ndb = idbclient(
                 self.p.host,
@@ -96,10 +107,15 @@ class InfluxDB(bt.feeds.DataBase):
             timeframe=TIMEFRAMES.get(self.p.timeframe, "d"),
         )
 
-        if not self.p.startdate:
-            st = "<= now()"
+        if not from_dt:
+            begin = ""
         else:
-            st = ">= '%s'" % self.p.startdate
+            begin = "And time >= '{}'".format(from_dt)
+
+        if not to_dt:
+            end = "And time <= now()"
+        else:
+            end = "And time <= '{}'".format(to_dt)
 
         # The query could already consider parameters like fromdate and todate
         # to have the database skip them and not the internal code
@@ -107,8 +123,8 @@ class InfluxDB(bt.feeds.DataBase):
             'SELECT mean("{open_f}") AS "open", mean("{high_f}") AS "high", '
             'mean("{low_f}") AS "low", mean("{close_f}") AS "close", '
             'mean("{vol_f}") AS "volume" '
-            'FROM "{dataname}" '
-            "WHERE time {begin} AND code='{stock_code}' "
+            'FROM "{measurement}" '
+            "WHERE code='{stock_code}' {begin} {end} "
             "GROUP BY time({timeframe}) fill(none)"
         ).format(
             open_f=self.p.open,
@@ -118,8 +134,9 @@ class InfluxDB(bt.feeds.DataBase):
             vol_f=self.p.volume,
             stock_code=self.p.stock_code,
             timeframe=tf,
-            begin=st,
-            dataname=self.p.dataname,
+            begin=begin,
+            end=end,
+            measurement=self.p.dataname,
         )
 
         try:

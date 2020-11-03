@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""该模块提供从 joinquant 查询股票价格的封装"""
 import math
 from typing import Dict, List
 

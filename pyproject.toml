@@ -23,6 +23,8 @@ isort = {extras = ["pyproject"], version = "^5.5.2"}
 jinja2 = "^2.11.2"
 backtrader = "^1.9.76"
 easyquotation = "^0.7.4"
+bcolz = "1.2.1"
+tables = "3.6.1"
 
 [tool.poetry.dev-dependencies]
 
