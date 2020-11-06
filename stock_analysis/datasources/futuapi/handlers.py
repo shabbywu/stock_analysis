@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from jinja2 import Template
+from textwrap import dedent
 from futu import PriceReminderHandlerBase, RET_OK, RET_ERROR
 
 from stock_analysis.alerts.notifiers import WeComNotifier
@@ -16,13 +18,13 @@ class WeComPriceReminder(PriceReminderHandlerBase):
             return RET_ERROR, content
         print("on_recv_rsp: ", content)
         self.notifier.msg_cache.append(
-            """
-            # {{ code }}{{ content }}
-            ## 目前: <font color="warning">{{ price }}</font>, 变化率: {{ change_rate }}
-            ## 告警阈值: {{ set_value }}
-        """.format(
-                **content
-            )
+            Template(
+                dedent(
+                    """# {{ code }} {{ content }}
+                    ## 目前: <font color="warning">{{ price }}</font>, 变化率: {{ change_rate }}
+                    ## 告警阈值: {{ set_value }}"""
+                )
+            ).render(**content)
         )
         self.notifier.report()
         return RET_OK, content

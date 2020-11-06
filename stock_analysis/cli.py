@@ -95,10 +95,8 @@ class Daemon:
 @click.option(
     "-f", "--fetch-data", type=bool, default=True,
 )
-@click.option(
-    "-n", "--notify", type=bool, default=False,
-)
-@click.option("--listen-futu-callback", type=bool, default=False)
+@click.option("-n", "--notify", type=bool, default=False, is_flag=True)
+@click.option("--listen-futu-callback", type=bool, default=False, is_flag=True)
 def daemon(fetch_data, notify, listen_futu_callback):
     session = databases.get_session()
     code_list = [

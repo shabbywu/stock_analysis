@@ -61,4 +61,5 @@ class FUTUTickSynchronizer(BaseSynchronizer, StockTickWriter):
         self.client = FUTURealTimeClient()
 
     def synchronize(self):
-        self.write_to_db(self.client.get_tick_batch(code_list=self.code_list))
+        if self.code_list:
+            self.write_to_db(self.client.get_tick_batch(code_list=self.code_list))
