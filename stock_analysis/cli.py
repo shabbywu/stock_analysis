@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
-import datetime
-from typing import List, Callable
 
 import arrow
 import click
@@ -19,7 +16,7 @@ from stock_analysis.datasources.futuapi.handlers import WeComPriceReminder
 from stock_analysis.datasources.futuapi.context import get_quote_ctx
 from stock_analysis.datasources.joinquant.persistence import JQStockHistorySynchronizer
 from stock_analysis.schemas import DateTimeRange
-from stock_analysis.utils.timeit import catch_time
+from stock_analysis.utils.daemon import Daemon
 from stock_analysis.utils.basic import detect_stock_market
 from stock_analysis.storage.sqlalchemy import databases, models
 
@@ -63,34 +60,6 @@ def fetch_stock_history_info_by_joinquant(code, interval, start, end):
         synchronizer.synchronize()
 
 
-class Daemon:
-    trading_times = [
-        (datetime.time(hour=8, minute=45), datetime.time(hour=11, minute=31)),
-        (datetime.time(hour=12, minute=59), datetime.time(hour=15, minute=1)),
-    ]
-
-    def __init__(self, plugins: List[Callable]):
-        self.plugins = plugins
-
-    def in_trading(self, now: datetime.time = None):
-        now = now or datetime.datetime.now().time()
-        for trading_time in self.trading_times:
-            if trading_time[0] <= now <= trading_time[1]:
-                return True
-        return False
-
-    def loop(self):
-        delta = 3
-        while True:
-            if not self.in_trading():
-                continue
-            with catch_time() as ctx:
-                for plugin in self.plugins:
-                    plugin()
-                if ctx.time_delta < delta:
-                    time.sleep(delta - ctx.time_delta)
-
-
 @cli.command()
 @click.option(
     "-f", "--fetch-data", type=bool, default=True,
@@ -131,4 +100,4 @@ def daemon(fetch_data, notify, listen_futu_callback):
     try:
         Daemon(plugins).loop()
     except KeyboardInterrupt:
-        pass
+        raise
