@@ -10,7 +10,7 @@ from stock_analysis.datasources.futuapi.context import get_quote_ctx
 from stock_analysis.datasources.futuapi.schemas import (
     StockBaseInfo as FUTUStockBaseInfo,
 )
-from stock_analysis.datasources.utils import detect_stock_market
+from stock_analysis.utils.basic import detect_stock_market
 from stock_analysis.schemas import StockBaseInfo
 from stock_analysis.datasources.base import BaseRealTimeClient
 from stock_analysis.schemas import StockTick
@@ -143,6 +143,9 @@ class FUTURealTimeClient(BaseRealTimeClient):
             volume=data["volume"][0],
             turnover=data["turnover"][0],
         )
+
+    def get_money_flow(self, code: str):
+        raise NotImplementedError
 
     @classmethod
     def get_stock_info(cls, code: str) -> StockBaseInfo:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import datetime
-from typing import List
+from typing import List, Callable
 
 import arrow
 import click
@@ -12,11 +12,13 @@ from stock_analysis.datasources.easyquotation.persistence import (
     TencentStockInfoBatchSynchronizer,
 )
 from stock_analysis.datasources.futuapi.persistence import (
-    FutuStockInfoBatchSynchronizer,
+    FUTUStockInfoBatchSynchronizer,
+    FUTUTickSynchronizer,
 )
 from stock_analysis.datasources.joinquant.persistence import JQStockHistorySynchronizer
 from stock_analysis.schemas import DateTimeRange
 from stock_analysis.utils.timeit import catch_time
+from stock_analysis.utils.basic import detect_stock_market
 from stock_analysis.storage.sqlalchemy import databases, models
 
 
@@ -28,7 +30,7 @@ def cli():
 @cli.command()
 @click.argument("market", type=click.Choice([t.value for t in MarketType]))
 def fetch_stock_base_info_by_futuapi(market: str):
-    synchronizer = FutuStockInfoBatchSynchronizer(market)
+    synchronizer = FUTUStockInfoBatchSynchronizer(market)
     synchronizer.synchronize()
 
 
@@ -65,9 +67,8 @@ class Daemon:
         (datetime.time(hour=12, minute=59), datetime.time(hour=15, minute=1)),
     ]
 
-    def __init__(self, code_list: List[str]):
-        self.synchronizer = SinaTickSynchronizer(code_list)
-        self.watch_dog = InfluxdbWatchDog()
+    def __init__(self, plugins: List[Callable]):
+        self.plugins = plugins
 
     def in_trading(self, now: datetime.time = None):
         now = now or datetime.datetime.now().time()
@@ -82,20 +83,47 @@ class Daemon:
             if not self.in_trading():
                 continue
             with catch_time() as ctx:
-                self.synchronizer.synchronize()
-                self.watch_dog.watch()
+                for plugin in self.plugins:
+                    plugin()
                 if ctx.time_delta < delta:
                     time.sleep(delta - ctx.time_delta)
 
 
 @cli.command()
-def daemon():
+@click.option(
+    "-f", "--fetch-data", type=bool, default=True,
+)
+@click.option(
+    "-n", "--notify", type=bool, default=False,
+)
+def daemon(fetch_data, notify):
     session = databases.get_session()
     code_list = [
         item[0] for item in session.query(models.StockBaseInfo.stock_code).all()
     ]
     session.close()
+    plugins = []
+
+    if fetch_data:
+        plugins.append(
+            SinaTickSynchronizer(
+                [
+                    code
+                    for code in code_list
+                    if detect_stock_market(code) in ["SZ", "SH"]
+                ]
+            ).synchronize
+        )
+        plugins.append(
+            FUTUTickSynchronizer(
+                [code for code in code_list if detect_stock_market(code) == "HK"]
+            ).synchronize
+        )
+
+    if notify:
+        plugins.append(InfluxdbWatchDog().watch)
+
     try:
-        Daemon(code_list).loop()
+        Daemon(plugins).loop()
     except KeyboardInterrupt:
         pass

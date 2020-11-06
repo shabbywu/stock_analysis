@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import abc
-from typing import List
+import datetime
+from typing import List, Dict
 
 from stock_analysis.schemas import (
     BaseModel,
@@ -8,7 +9,9 @@ from stock_analysis.schemas import (
     StockBaseInfo,
     StockHistogramItem,
     StockTick,
+    QuotedPrice,
 )
+from stock_analysis.storage.influxdb.databases import client as db
 from stock_analysis.storage.sqlalchemy import databases, models
 
 
@@ -66,3 +69,40 @@ class StockInfoUpdater(BaseDBWriter):
                 pb_rate=obj.pb_rate,
             ),
         )
+
+
+def format_datetime(dt: datetime.datetime) -> str:
+    return dt.replace(microsecond=0).isoformat()
+
+
+def format_quotations(prefix: str, prices: List[QuotedPrice]) -> Dict:
+    ret = {}
+    for idx, quotation in enumerate(prices):
+        ret.update(
+            {
+                f"{prefix}_{idx + 1}_price": quotation.value,
+                f"{prefix}_{idx + 1}_volume": quotation.volume,
+            }
+        )
+    return ret
+
+
+class StockTickWriter(BaseDBWriter):
+    table_name = "stock_ticks"
+    source_type: str
+
+    def write_to_db(self, objs: List[StockTick]):
+        data = [
+            dict(
+                measurement=self.table_name,
+                tags=dict(code=obj.code, source_type=self.source_type),
+                time=format_datetime(obj.time),
+                fields=dict(
+                    **format_quotations("ask", obj.asks),
+                    **format_quotations("bid", obj.bids),
+                    **obj.dict(include={"current", "volume", "turnover", "name"}),
+                ),
+            )
+            for obj in objs
+        ]
+        db.write_points(data)

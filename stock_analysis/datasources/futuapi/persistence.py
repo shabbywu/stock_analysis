@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 import time
+from typing import List
 
 from stock_analysis.constants import MarketType
-from stock_analysis.datasources.base import BaseSynchronizer, BaseDBWriter
-from stock_analysis.datasources.futuapi.client import StockInfoFetcher
+from stock_analysis.datasources.base import (
+    BaseSynchronizer,
+    BaseDBWriter,
+    StockTickWriter,
+)
+from stock_analysis.datasources.futuapi.client import (
+    StockInfoFetcher,
+    FUTURealTimeClient,
+)
 from stock_analysis.datasources.futuapi.schemas import StockBaseInfo
 from stock_analysis.storage.sqlalchemy import databases, models
 
 
-class FutuStockInfoUpdater(BaseDBWriter):
+class FUTUStockInfoUpdater(BaseDBWriter):
     session: databases.Session
 
     def write_to_db(self, obj: StockBaseInfo):
@@ -26,7 +34,7 @@ class FutuStockInfoUpdater(BaseDBWriter):
             databases.get_or_create(self.session, models.StockFinancial(**financial))
 
 
-class FutuStockInfoBatchSynchronizer(BaseSynchronizer, FutuStockInfoUpdater):
+class FUTUStockInfoBatchSynchronizer(BaseSynchronizer, FUTUStockInfoUpdater):
     def __init__(self, market: MarketType):
         self.market = market
         self.session = databases.get_session()
@@ -43,3 +51,14 @@ class FutuStockInfoBatchSynchronizer(BaseSynchronizer, FutuStockInfoUpdater):
             time.sleep(10)
             if fetch_result[0]:
                 break
+
+
+class FUTUTickSynchronizer(BaseSynchronizer, StockTickWriter):
+    source_type = "futu"
+
+    def __init__(self, code_list: List[str]):
+        self.code_list = code_list
+        self.client = FUTURealTimeClient()
+
+    def synchronize(self):
+        self.write_to_db(self.client.get_tick_batch(code_list=self.code_list))

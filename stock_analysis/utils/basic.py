@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from futu.common.constant import Market
+from futu import Market
 
 
 def detect_stock_market(code: str) -> str:
