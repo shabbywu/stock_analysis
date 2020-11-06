@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+from futu import PriceReminderHandlerBase, RET_OK, RET_ERROR
+
+from stock_analysis.alerts.notifiers import WeComNotifier
+
+
+class WeComPriceReminder(PriceReminderHandlerBase):
+    def __init__(self):
+        super().__init__()
+        self.notifier = WeComNotifier()
+
+    def on_recv_rsp(self, rsp_pb):
+        ret_code, content = super().on_recv_rsp(rsp_pb)
+        if ret_code != RET_OK:
+            print("WeComPriceReminder: error, msg: %s" % content)
+            return RET_ERROR, content
+        print("on_recv_rsp: ", content)
+        self.notifier.msg_cache.append(
+            """
+            # {{ code }}{{ content }}
+            ## 目前: <font color="warning">{{ price }}</font>, 变化率: {{ change_rate }}
+            ## 告警阈值: {{ set_value }}
+        """.format(
+                **content
+            )
+        )
+        self.notifier.report()
+        return RET_OK, content

@@ -15,6 +15,8 @@ from stock_analysis.datasources.futuapi.persistence import (
     FUTUStockInfoBatchSynchronizer,
     FUTUTickSynchronizer,
 )
+from stock_analysis.datasources.futuapi.handlers import WeComPriceReminder
+from stock_analysis.datasources.futuapi.context import get_quote_ctx
 from stock_analysis.datasources.joinquant.persistence import JQStockHistorySynchronizer
 from stock_analysis.schemas import DateTimeRange
 from stock_analysis.utils.timeit import catch_time
@@ -96,7 +98,8 @@ class Daemon:
 @click.option(
     "-n", "--notify", type=bool, default=False,
 )
-def daemon(fetch_data, notify):
+@click.option("--listen-futu-callback", type=bool, default=False)
+def daemon(fetch_data, notify, listen_futu_callback):
     session = databases.get_session()
     code_list = [
         item[0] for item in session.query(models.StockBaseInfo.stock_code).all()
@@ -122,6 +125,10 @@ def daemon(fetch_data, notify):
 
     if notify:
         plugins.append(InfluxdbWatchDog().watch)
+
+    if listen_futu_callback:
+        ctx = get_quote_ctx()
+        ctx.set_handler(WeComPriceReminder())
 
     try:
         Daemon(plugins).loop()
