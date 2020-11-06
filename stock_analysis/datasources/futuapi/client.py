@@ -128,11 +128,24 @@ class FUTURealTimeClient(BaseRealTimeClient):
     stock_info_maps: Dict[str, StockBaseInfo] = {}
 
     def get_tick_batch(self, code_list: List[str]) -> List[StockTick]:
-        return [self.get_tick(code) for code in code_list]
+        ctx = get_quote_ctx()
+        _, datas = ctx.get_market_snapshot(code_list)
+        stock_info_maps = {code: self.get_stock_info(code) for code in code_list}
+        return [
+            StockTick(
+                name=stock_info_maps[data["code"]].name,
+                code=stock_info_maps[data["code"]].code,
+                time=data["update_time"],
+                current=data["last_price"],
+                volume=data["volume"],
+                turnover=data["turnover"],
+            )
+            for idx, data in datas.iterrows()
+        ]
 
     def get_tick(self, code: str) -> StockTick:
         ctx = get_quote_ctx()
-        ret, data = ctx.get_market_snapshot([code])
+        _, data = ctx.get_market_snapshot([code])
         stock_info = self.get_stock_info(code)
         return StockTick(
             # TODO: 获取名称
