@@ -12,8 +12,7 @@ from stock_analysis.datasources.futuapi.persistence import (
     FUTUStockInfoBatchSynchronizer,
     FUTUTickSynchronizer,
 )
-from stock_analysis.datasources.futuapi.handlers import WeComPriceReminder
-from stock_analysis.datasources.futuapi.context import get_quote_ctx
+from stock_analysis.datasources.futuapi.handlers import receive_futu_notify
 from stock_analysis.datasources.joinquant.persistence import JQStockHistorySynchronizer
 from stock_analysis.schemas import DateTimeRange
 from stock_analysis.utils.daemon import Daemon
@@ -61,9 +60,7 @@ def fetch_stock_history_info_by_joinquant(code, interval, start, end):
 
 
 @cli.command()
-@click.option(
-    "-f", "--fetch-data", type=bool, default=True,
-)
+@click.option("--fetch-data/--no-fetch-data", default=True)
 @click.option("-n", "--notify", type=bool, default=False, is_flag=True)
 @click.option("--listen-futu-callback", type=bool, default=False, is_flag=True)
 def daemon(fetch_data, notify, listen_futu_callback):
@@ -94,8 +91,7 @@ def daemon(fetch_data, notify, listen_futu_callback):
         plugins.append(InfluxdbWatchDog().watch)
 
     if listen_futu_callback:
-        ctx = get_quote_ctx()
-        ctx.set_handler(WeComPriceReminder())
+        receive_futu_notify()
 
     try:
         Daemon(plugins).loop()

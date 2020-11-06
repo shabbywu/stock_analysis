@@ -4,6 +4,7 @@ from textwrap import dedent
 from futu import PriceReminderHandlerBase, RET_OK, RET_ERROR
 
 from stock_analysis.alerts.notifiers import WeComNotifier
+from stock_analysis.datasources.futuapi.context import get_quote_ctx
 
 
 class WeComPriceReminder(PriceReminderHandlerBase):
@@ -28,3 +29,8 @@ class WeComPriceReminder(PriceReminderHandlerBase):
         )
         self.notifier.report()
         return RET_OK, content
+
+
+def receive_futu_notify():
+    ctx = get_quote_ctx()
+    ctx.set_handler(WeComPriceReminder())
