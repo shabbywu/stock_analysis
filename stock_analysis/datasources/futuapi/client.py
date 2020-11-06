@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from futu.common import constant
 from futu.common.constant import FinancialQuarter, Market, SortDir, StockField
 from futu.quote.open_quote_context import FinancialFilter, SimpleFilter
 from stock_analysis.datasources.futuapi.context import get_quote_ctx
-from stock_analysis.datasources.futuapi.schemas import StockBaseInfo
+from stock_analysis.datasources.futuapi.schemas import (
+    StockBaseInfo as FUTUStockBaseInfo,
+)
+from stock_analysis.datasources.utils import detect_stock_market
+from stock_analysis.schemas import StockBaseInfo
+from stock_analysis.datasources.base import BaseRealTimeClient
+from stock_analysis.schemas import StockTick
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +73,9 @@ class StockInfoFetcher:
         ordering_field.sort = SortDir.ASCEND
         return ordering_field
 
-    def batch_fetch(self, limit=200, offset=0) -> Tuple[bool, int, List[StockBaseInfo]]:
+    def batch_fetch(
+        self, limit=200, offset=0
+    ) -> Tuple[bool, int, List[FUTUStockBaseInfo]]:
         """从 富途 API 批量获取股票基本信息"""
         ctx = get_quote_ctx()
         ret, ls = ctx.get_stock_filter(Market.SZ, self.fields, begin=offset, num=limit)
@@ -88,7 +96,7 @@ class StockInfoFetcher:
                     financial[key[1]][key[0]] = obj.__dict__[key]
             # update result
             result[2].append(
-                StockBaseInfo(
+                FUTUStockBaseInfo(
                     name=obj.stock_name,
                     code=obj.stock_code,
                     pe_annual=obj.pe_annual,
@@ -114,3 +122,36 @@ class KLineFetcher:
         # TODO: 获取实时 k 线
         ctx = get_quote_ctx()
         ret, ls = ctx.get_cur_kline(stock_code, num=limit, ktype=ktype, autype=autype)
+
+
+class FUTURealTimeClient(BaseRealTimeClient):
+    stock_info_maps: Dict[str, StockBaseInfo] = {}
+
+    def get_tick_batch(self, code_list: List[str]) -> List[StockTick]:
+        return [self.get_tick(code) for code in code_list]
+
+    def get_tick(self, code: str) -> StockTick:
+        ctx = get_quote_ctx()
+        ret, data = ctx.get_market_snapshot([code])
+        stock_info = self.get_stock_info(code)
+        return StockTick(
+            # TODO: 获取名称
+            name=stock_info.name,
+            code=stock_info.code,
+            time=data["update_time"][0],
+            current=data["last_price"][0],
+            volume=data["volume"][0],
+            turnover=data["turnover"][0],
+        )
+
+    @classmethod
+    def get_stock_info(cls, code: str) -> StockBaseInfo:
+        """获取股票的基本信息"""
+        if code not in cls.stock_info_maps:
+            ctx = get_quote_ctx()
+            ret, data = ctx.get_stock_basicinfo(
+                detect_stock_market(code), code_list=[code]
+            )
+            info = StockBaseInfo(code=data["code"][0], name=data["name"][0])
+            cls.stock_info_maps[code] = info
+        return cls.stock_info_maps[code]

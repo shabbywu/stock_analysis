@@ -8,6 +8,7 @@ from pandas import DataFrame
 from stock_analysis import settings
 from stock_analysis.datasources.base import BaseHistoryClient
 from stock_analysis.schemas import DateTimeRange, StockBaseInfo, StockHistogramItem
+from stock_analysis.datasources.joinquant.utils import normalize_stock_code
 
 
 class JQClient(BaseHistoryClient):
@@ -50,7 +51,7 @@ class JQClient(BaseHistoryClient):
         unknown_codes = [
             code for code in code_list if code not in cls.normalized_code_maps
         ]
-        normalized_codes = jqdatasdk.normalize_code(unknown_codes)
+        normalized_codes = [normalize_stock_code(code) for code in unknown_codes]
         for key, value in zip(unknown_codes, normalized_codes):
             cls.normalized_code_maps[key] = value
         return [cls.normalized_code_maps[code] for code in code_list]
