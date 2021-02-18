@@ -12,13 +12,11 @@ services:
       - INFLUXDB_ADMIN_PASSWORD=example
       - INFLUXDB_USER=example
       - INFLUXDB_USER_PASSWORD=example
-  chronograf:
-    image:  chronograf
+  grafana:
+    image:  grafana/grafana
     restart: always
     ports:
-      - "8888:8888"
-    volumes:
-      - ./chronograf:/var/lib/chronograf
+      - "3000:3000"
     environment:
       influxdb-url: http://influxdb:8086
   mysqldb:

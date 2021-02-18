@@ -22,8 +22,13 @@ JOINQUANT_AUTH = dict(username="your-username", password="your-password")
 FUTU_OPEND_PRI_KEY = "abs-path-to-your-rsa-private-key"
 FUTU_OPEND_SERVER = dict(host="your-host", port="your-port")
 
+# 企业微信通知 webhook 地址
 WECOM_NOTIFY_URL = None
 WECOM_CHART_ID = None
+
+# 飞书通知 webhook 地址
+LARK_NOTIFY_URL = None
+
 
 LOGGING = {
     "version": 1,

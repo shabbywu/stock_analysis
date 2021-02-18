@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+import logging
 from typing import Generator, List
 
 import arrow
 import easyquotation
 from stock_analysis.datasources.base import BaseRealTimeClient
 from stock_analysis.schemas import StockBaseInfo, StockTick
+
+
+logger = logging.getLogger(__name__)
 
 
 def format_code(code: str) -> str:
@@ -30,7 +34,7 @@ class TencentStockInfoFetcher:
                     pb_rate=value.get("PB", 0),
                 )
             except ValueError as e:
-                print(f"ValueError When iter from {code}<{value['name']}>")
+                logger.warning(f"ValueError When iter from {code}<{value['name']}>")
 
 
 class SinaRealTimeClient(BaseRealTimeClient):

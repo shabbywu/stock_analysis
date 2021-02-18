@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+import logging
 from jinja2 import Template
 from textwrap import dedent
 from futu import PriceReminderHandlerBase, RET_OK, RET_ERROR
 
 from stock_analysis.alerts.notifiers import WeComNotifier
 from stock_analysis.datasources.futuapi.context import get_quote_ctx
+
+
+logger = logging.getLogger(__name__)
 
 
 class WeComPriceReminder(PriceReminderHandlerBase):
@@ -15,9 +19,9 @@ class WeComPriceReminder(PriceReminderHandlerBase):
     def on_recv_rsp(self, rsp_pb):
         ret_code, content = super().on_recv_rsp(rsp_pb)
         if ret_code != RET_OK:
-            print("WeComPriceReminder: error, msg: %s" % content)
+            logger.error("WeComPriceReminder: error, msg: %s" % content)
             return RET_ERROR, content
-        print("on_recv_rsp: ", content)
+        logger.debug("on_recv_rsp: ", content)
         self.notifier.msg_cache.append(
             Template(
                 dedent(

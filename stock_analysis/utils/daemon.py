@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import datetime
 import signal
 import time
@@ -10,6 +11,7 @@ HANDLED_SIGNALS = (
     signal.SIGINT,  # Unix signal 2. Sent by Ctrl+C.
     signal.SIGTERM,  # Unix signal 15. Sent by `kill <pid>`.
 )
+logger = logging.getLogger(__name__)
 
 
 class SignalHandler:
@@ -45,7 +47,7 @@ class Daemon:
     def loop(self):
         delta = 3
         while not self.should_exit:
-            print("Start A Loop")
+            logger.debug("Start A Loop")
             if not self.in_trading():
                 continue
             with catch_time() as ctx:
@@ -53,7 +55,7 @@ class Daemon:
                     plugin()
                 if ctx.time_delta < delta:
                     time.sleep(delta - ctx.time_delta)
-        print("exit.")
+        logger.info("exit.")
 
     def signal_handler(self, sig, frame):
         self.should_exit = True
