@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import logging
 from typing import List
 
 from stock_analysis.constants import MarketType
@@ -14,6 +15,9 @@ from stock_analysis.datasources.futuapi.client import (
 )
 from stock_analysis.datasources.futuapi.schemas import StockBaseInfo
 from stock_analysis.storage.sqlalchemy import databases, models
+
+
+logger = logging.getLogger(__name__)
 
 
 class FUTUStockInfoUpdater(BaseDBWriter):
@@ -61,5 +65,6 @@ class FUTUTickSynchronizer(BaseSynchronizer, StockTickWriter):
         self.client = FUTURealTimeClient()
 
     def synchronize(self):
+        logger.info(f"synchronizing {self.code_list}")
         if self.code_list:
             self.write_to_db(self.client.get_tick_batch(code_list=self.code_list))

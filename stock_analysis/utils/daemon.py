@@ -29,7 +29,7 @@ class SignalHandler:
 class Daemon:
     trading_times = [
         (datetime.time(hour=8, minute=45), datetime.time(hour=11, minute=31)),
-        (datetime.time(hour=12, minute=59), datetime.time(hour=15, minute=1)),
+        (datetime.time(hour=12, minute=59), datetime.time(hour=16, minute=1)),
     ]
 
     def __init__(self, plugins: List[Callable]):
