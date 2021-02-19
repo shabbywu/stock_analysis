@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import abc
 import datetime
+import pytz
 from typing import List, Dict
 
 from stock_analysis.schemas import (
@@ -13,6 +14,8 @@ from stock_analysis.schemas import (
 )
 from stock_analysis.storage.influxdb.databases import client as db
 from stock_analysis.storage.sqlalchemy import databases, models
+
+DEFAULT_EPOCH = datetime.datetime(1970, 1, 1)
 
 
 class BaseRealTimeClient(metaclass=abc.ABCMeta):
@@ -72,7 +75,13 @@ class StockInfoUpdater(BaseDBWriter):
 
 
 def format_datetime(dt: datetime.datetime) -> str:
-    return dt.replace(microsecond=0).isoformat()
+    """transfer datetime to iso-format, and make sure the datetime is base on utc tz"""
+    EPOCH = DEFAULT_EPOCH
+    if dt.tzinfo is not None:
+        EPOCH = datetime.datetime(1970, 1, 1, tzinfo=dt.tzinfo)
+
+    dt = EPOCH + datetime.timedelta(seconds=dt.timestamp())
+    return dt.replace(microsecond=0, tzinfo=pytz.utc).isoformat()
 
 
 def format_quotations(prefix: str, prices: List[QuotedPrice]) -> Dict:
