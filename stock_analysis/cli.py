@@ -83,7 +83,11 @@ def daemon(fetch_data, notify, listen_futu_callback):
         )
         plugins.append(
             FUTUTickSynchronizer(
-                [code for code in code_list if detect_stock_market(code) == "HK"]
+                [
+                    code
+                    for code in code_list
+                    if detect_stock_market(code) in {"HK", "US"}
+                ]
             ).synchronize
         )
 

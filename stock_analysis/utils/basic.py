@@ -7,6 +7,8 @@ def detect_stock_market(code: str) -> str:
     code = code.upper()
     if code.startswith("HK."):
         return Market.HK
+    if code.startswith("US."):
+        return Market.US
     if code.startswith("SZ.") or code.endswith(".XSHE"):
         return Market.SZ
     if code.startswith("SH.") or code.endswith("XSHG"):
